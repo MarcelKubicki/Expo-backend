@@ -10,5 +10,10 @@ Accept: application/json
 
 ###
 
-GET http://127.0.0.1:8000/all_events
+GET http://127.0.0.1:8000/events
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/event/1
 Accept: application/json
