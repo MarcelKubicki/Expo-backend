@@ -10,10 +10,25 @@ Accept: application/json
 
 ###
 
-GET http://127.0.0.1:8000/events
+GET http://127.0.0.1:8000/api/v1/events
 Accept: application/json
 
 ###
 
-GET http://127.0.0.1:8000/event/1
+GET http://127.0.0.1:8000/api/v1/events/5
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/api/v1/exhibitors
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/api/v1/exhibitors/1
+Accept: application/json
+
+###
+
+GET http://127.0.0.1:8000/api/v1/exhibitors?nam=com
 Accept: application/json

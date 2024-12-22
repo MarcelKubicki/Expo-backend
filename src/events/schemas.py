@@ -1,37 +1,27 @@
-from pydantic import BaseModel, HttpUrl
+from pydantic import BaseModel
 from datetime import date
 from typing import List
+from src.exhibitors.schemas import Exhibitor
 
 
-class Exhibitor(BaseModel):
-    nr_stoiska: int
-    nazwa: str
-    img_url: HttpUrl
-    telefon: str
-    adres: str
-    mail: str
-    strona_url: str
-    opis: str
-
-
-class EventItem(BaseModel):
+class EventCalendarItem(BaseModel):
     id: int
-    nazwa: str
-    img_url: HttpUrl
-    data_rozpo: date
-    data_zakon: date
-    opis: str
-    lokalizacja: str
-    kategoria: str
+    event_name: str
+    img_url: str
+    date_start: date
+    date_end: date
+    short_desc: str
+    categ_name: str
+    loc_name: str
 
 
 class EventPageItem(BaseModel):
-    nazwa: str
-    img_url: HttpUrl
-    data_rozpo: date
-    data_zakon: date
-    opis: str
-    lokalizacja: str
+    event_name: str
+    img_url: str
+    date_start: date
+    date_end: date
+    long_desc: str
+    loc_name: str
     lat: float
     lng: float
-    wystawcy: List[Exhibitor]
+    exhibitors: List[Exhibitor]

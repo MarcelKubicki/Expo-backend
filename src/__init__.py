@@ -1,17 +1,17 @@
 from fastapi import FastAPI
 from src.events.routes import event_router
+from src.exhibitors.routes import exhibitor_router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
 from database.main import init_db
-import mysql.connector
 VERSION = "v1"
 
 
 @asynccontextmanager
 async def life_span(app: FastAPI):
     print(f"server is starting...")
-    await init_db()
+    # await init_db()
     yield
     print(f"server has been stopped")
 
@@ -23,7 +23,7 @@ app = FastAPI(
     lifespan=life_span
 )
 app.include_router(event_router, prefix=f'/api/{VERSION}/events')
-
+app.include_router(exhibitor_router, prefix=f'/api/{VERSION}/exhibitors')
 
 origins = [
     "http://localhost:5173",
