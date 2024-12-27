@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from src.events.routes import event_router
 from src.exhibitors.routes import exhibitor_router
+from src.auth.routes import auth_router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from contextlib import asynccontextmanager
@@ -22,12 +23,14 @@ app = FastAPI(
     version=VERSION,
     lifespan=life_span
 )
-app.include_router(event_router, prefix=f'/api/{VERSION}/events')
-app.include_router(exhibitor_router, prefix=f'/api/{VERSION}/exhibitors')
+app.include_router(event_router, prefix=f'/api/{VERSION}/events', tags=['events'])
+app.include_router(exhibitor_router, prefix=f'/api/{VERSION}/exhibitors', tags=['exhibitors'])
+app.include_router(auth_router, prefix=f'/api/{VERSION}/auth', tags=['auth'])
 
 origins = [
     "http://localhost:5173",
-    "http://127.0.0.1:5173"
+    "http://127.0.0.1:5173",
+    "https://restfox.dev"
 ]
 app.add_middleware(
     CORSMiddleware,

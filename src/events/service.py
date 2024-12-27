@@ -1,6 +1,7 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
 from .models import Event, Localization, Category, EventExhibitor
+from .schemas import EventCreateModel
 from src.exhibitors.models import Exhibitor
 
 
@@ -65,5 +66,22 @@ class EventService:
 
         return response
 
-    async def create_event(self, event_data, session: AsyncSession):
-        pass
+    async def create_event(self, event_data: EventCreateModel, session: AsyncSession):
+        event_data_dict = event_data.model_dump()
+
+        loc_statement = select(Localization.id).where(Localization.loc_name == event_data.localization)
+        loc_result = await session.exec(loc_statement)
+        loc_id = loc_result.first()
+
+        cat_statement = select(Category.id).where(Category.short_categ_name == event_data.category)
+        cat_result = await session.exec(cat_statement)
+        cat_id = cat_result.first()
+
+        new_event = Event(
+            **event_data_dict,
+            localization_id=loc_id,
+            category_id=cat_id
+        )
+        session.add(new_event)
+        await session.commit()
+        return new_event

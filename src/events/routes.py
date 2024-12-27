@@ -1,12 +1,15 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 from typing import List, Optional
 from sqlmodel.ext.asyncio.session import AsyncSession
-from src.events.schemas import EventCalendarItem, EventPageItem
+from src.events.schemas import EventCalendarItem, EventPageItem, EventCreateModel
 from src.database.main import get_session
 from src.events.service import EventService
+from src.auth.dependencies import AccessTokenBearer
+
 
 event_router = APIRouter()
 event_service = EventService()
+acc_token_bearer = AccessTokenBearer()
 
 
 @event_router.get('/', response_model=List[EventCalendarItem])
@@ -24,3 +27,10 @@ async def get_event(event_id: int, session: AsyncSession = Depends(get_session))
     response = await event_service.get_event(session, event_id)
 
     return response
+
+
+@event_router.post("/", status_code=status.HTTP_201_CREATED)
+async def create_event(event_data: EventCreateModel, session: AsyncSession = Depends(get_session),
+                       user_details=Depends(acc_token_bearer)):
+    new_event = await event_service.create_event(event_data, session)
+    return new_event

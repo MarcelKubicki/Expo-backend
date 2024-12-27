@@ -7,7 +7,7 @@ class User(SQLModel, table=True):
 
     id: int | None = Field(default=None, primary_key=True)
     username: str = Field(sa_column=Column(String(24)))
-    password: str = Field(exclude=True)
+    password_hash: str = Field(exclude=True)
 
     def __repr__(self):
         return f"<User {self.username}>"
