@@ -28,11 +28,22 @@ class History(BaseModel):
 
 
 class ExhibitorFullInfo(BaseModel):
+    exhib_name: str | None
+    img_url: HttpUrl | None
+    tel: str | None
+    adres: str | None
+    mail: str | None
+    site_url: str | None
+    description: str | None
+    is_edited: bool | None
+    history: List[History] | None
+
+
+class ExhibitorCreate(BaseModel):
     exhib_name: str
-    img_url: HttpUrl
-    tel: str
+    img_url: str
     adres: str
     mail: str
     site_url: str
     description: str
-    history: List[History]
+    user_id: int

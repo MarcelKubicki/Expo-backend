@@ -17,7 +17,7 @@ class EventService:
                             Category.categ_name,
                             Localization.loc_name)
                      .where(Event.category_id == Category.id)
-                     .where(Event.localization_id == Localization.id))
+                     .where(Event.localization_id == Localization.id)).order_by(Event.date_start)
 
         if nam:
             statement = statement.filter(Event.event_name.like(f"%{nam}%"))

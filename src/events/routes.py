@@ -4,12 +4,14 @@ from sqlmodel.ext.asyncio.session import AsyncSession
 from src.events.schemas import EventCalendarItem, EventPageItem, EventCreateModel
 from src.database.main import get_session
 from src.events.service import EventService
-from src.auth.dependencies import AccessTokenBearer
+from src.auth.dependencies import AccessTokenBearer, RoleChecker
 
 
 event_router = APIRouter()
 event_service = EventService()
 acc_token_bearer = AccessTokenBearer()
+role_checker = Depends(RoleChecker(['user', 'admin']))
+admin_role_checker = Depends(RoleChecker('admin'))
 
 
 @event_router.get('/', response_model=List[EventCalendarItem])
@@ -29,7 +31,7 @@ async def get_event(event_id: int, session: AsyncSession = Depends(get_session))
     return response
 
 
-@event_router.post("/", status_code=status.HTTP_201_CREATED)
+@event_router.post("/", status_code=status.HTTP_201_CREATED, dependencies=[role_checker])
 async def create_event(event_data: EventCreateModel, session: AsyncSession = Depends(get_session),
                        user_details=Depends(acc_token_bearer)):
     new_event = await event_service.create_event(event_data, session)

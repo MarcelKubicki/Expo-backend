@@ -12,8 +12,6 @@ async_engine = AsyncEngine(create_engine(
 
 async def init_db() -> None:
     async with async_engine.begin() as conn:
-        from events.models import Localization, Category, Event, EventExhibitor
-        from exhibitors.models import Exhibitor
         await conn.run_sync(SQLModel.metadata.create_all)
 
 

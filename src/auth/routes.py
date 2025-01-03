@@ -3,14 +3,16 @@ from fastapi.responses import JSONResponse
 from fastapi.exceptions import HTTPException
 from .schemas import UserCreateModel, UserModel, UserLoginModel
 from .service import UserService
-from .dependencies import RefreshTokenBearer
+from .dependencies import AccessTokenBearer, RefreshTokenBearer, get_current_user, RoleChecker
 from .utils import create_access_token, decode_token, verify_password
 from src.database.main import get_session
+from src.database.redis import add_jti_to_blocklist
 from sqlmodel.ext.asyncio.session import AsyncSession
 from datetime import timedelta, datetime
 
 auth_router = APIRouter()
 user_service = UserService()
+admin_role_checker = RoleChecker('admin')
 
 REFRESH_TOKEN_EXPIRY = 2
 
@@ -20,7 +22,7 @@ async def create_user_account(user_data: UserCreateModel, session: AsyncSession 
     username = user_data.username
     user_exists = await user_service.user_exists(username, session)
     if user_exists:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="User with this username already exists")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User with this username already exists")
 
     new_user = await user_service.create_user(user_data, session)
     return new_user
@@ -38,7 +40,8 @@ async def login_user(login_data: UserLoginModel, session: AsyncSession = Depends
             access_token = create_access_token(
                 user_data={
                     "id": str(user.id),
-                    'username': user.username
+                    'username': user.username,
+                    "role_name": user.name
                 }
             )
             refresh_token = create_access_token(
@@ -57,6 +60,7 @@ async def login_user(login_data: UserLoginModel, session: AsyncSession = Depends
                     "user": {
                         "id": str(user.id),
                         "username": user.username,
+                        "roles": [user.name]
                     }
                 }
             )
@@ -76,3 +80,15 @@ async def get_new_access_token(token_details: dict = Depends(RefreshTokenBearer(
         return JSONResponse(content={"access_token": new_access_token})
 
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired token")
+
+
+@auth_router.get('/logout')
+async def revoke_token(token_details: dict = Depends(AccessTokenBearer())):
+    jti = token_details['jti']
+    await add_jti_to_blocklist(jti)
+    return JSONResponse(content={"message": "Logout successfully"}, status_code=status.HTTP_200_OK)
+
+
+@auth_router.get('/me')
+async def get_current_user(user=Depends(get_current_user), _: bool = Depends(admin_role_checker)):
+    return user
