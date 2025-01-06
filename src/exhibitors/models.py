@@ -35,3 +35,25 @@ class ExhibitorUnverified(SQLModel, table=True):
 
     def __repr__(self):
         return f"<ExhibitorUnverified {self.exhib_name}>"
+
+
+class Notification(SQLModel, table=True):
+    __tablename__ = "notification"
+
+    id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(sa_column=String(150))
+
+    def __repr__(self):
+        return f"<Notification {self.name}>"
+
+
+class NotificationUser(SQLModel, table=True):
+    __tablename__ = "notification_user"
+
+    id: int | None = Field(default=None, primary_key=True)
+    notification_id: int = Field(foreign_key="notification.id")
+    user_id: int = Field(foreign_key="user.id")
+    message: str | None = Field(default=None, sa_column=Column(String(250)))
+
+    def __repr__(self):
+        return f"<NotificationUser {self.message}>"

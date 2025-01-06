@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, status
 from typing import List, Optional
 from sqlmodel.ext.asyncio.session import AsyncSession
-from src.events.schemas import EventCalendarItem, EventPageItem, EventCreateModel
+from src.events.schemas import EventCalendarItem, EventPageItem, EventCreateModel, EventExhibitorVerify
+from src.events.models import EventExhibitor
 from src.database.main import get_session
 from src.events.service import EventService
 from src.auth.dependencies import AccessTokenBearer, RoleChecker
@@ -36,3 +37,15 @@ async def create_event(event_data: EventCreateModel, session: AsyncSession = Dep
                        user_details=Depends(acc_token_bearer)):
     new_event = await event_service.create_event(event_data, session)
     return new_event
+
+
+@event_router.put('/accept_exhibitor', status_code=status.HTTP_202_ACCEPTED)
+async def accept_exhibitor(event_exhibitor_data: EventExhibitorVerify, session: AsyncSession = Depends(get_session)):
+    response = await event_service.accept_event_exhibitor(event_exhibitor_data, session)
+    return response
+
+
+@event_router.put('/decline_exhibitor', status_code=status.HTTP_202_ACCEPTED)
+async def decline_exhibitor(event_exhibitor_data: EventExhibitorVerify, session: AsyncSession = Depends(get_session)):
+    response = await event_service.decline_event_exhibitor(event_exhibitor_data, session)
+    return response

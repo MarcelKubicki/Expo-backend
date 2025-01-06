@@ -1,5 +1,5 @@
 from sqlmodel import SQLModel, Field
-from sqlalchemy import Column, Text, String, Double
+from sqlalchemy import Column, Text, String, Double, Boolean
 from datetime import date
 
 
@@ -46,9 +46,11 @@ class Event(SQLModel, table=True):
 class EventExhibitor(SQLModel, table=True):
     __tablename__ = "event_exhibitor"
 
-    event_id: int | None = Field(default=None, primary_key=True)
-    exhibitor_id: int | None = Field(default=None, primary_key=True)
+    id: int | None = Field(default=None, primary_key=True)
+    event_id: int | None = Field(default=None, foreign_key="event.id")
+    exhibitor_id: int | None = Field(default=None, foreign_key="exhibitor.id")
     stand_num: int
+    is_verified: bool = Field(default=0, sa_column=Column(Boolean, default=0))
 
     def __repr__(self):
         return f"<EventExhibitor {self.event_id} - {self.exhibitor_id}>"

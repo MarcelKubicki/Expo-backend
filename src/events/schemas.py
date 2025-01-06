@@ -36,3 +36,8 @@ class EventCreateModel(BaseModel):
     long_desc: str
     localization: str
     category: str
+
+
+class EventExhibitorVerify(BaseModel):
+    id: int
+    message: str | None

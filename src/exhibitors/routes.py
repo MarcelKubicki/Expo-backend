@@ -3,7 +3,7 @@ from typing import List, Optional
 from sqlmodel.ext.asyncio.session import AsyncSession
 from src.database.main import get_session
 from .service import ExhibitorService
-from .schemas import ExhibitorListItem, ExhibitorFullInfo, ExhibitorCreate
+from .schemas import ExhibitorListItem, ExhibitorFullInfo, ExhibitorCreate, ExhibitorAdmin, ExhibitorAdmin2, ExhibitorVerify
 from uuid import uuid4
 from src.config import Config
 
@@ -15,6 +15,12 @@ exhibitor_service = ExhibitorService()
 async def get_all_exhibitors(session: AsyncSession = Depends(get_session), nam: Optional[str] = None,
                              cat: Optional[str] = None):
     response = await exhibitor_service.get_all_exhibitors(session, nam, cat)
+    return response
+
+
+@exhibitor_router.get("/unverified", response_model=List[ExhibitorAdmin2])
+async def get_all_unverified_exhibitors(session: AsyncSession = Depends(get_session)):
+    response = await exhibitor_service.get_all_unverified_exhibitors(session)
     return response
 
 
@@ -45,3 +51,15 @@ async def upload_img(file: UploadFile = File(...), session: AsyncSession = Depen
         image.write(content)
 
     return {"filename": f"http://127.0.0.1:8000/uploads/images/{file.filename}"}
+
+
+@exhibitor_router.post('/accept', status_code=status.HTTP_202_ACCEPTED)
+async def accept_verification(verify_data: ExhibitorVerify, session: AsyncSession = Depends(get_session)):
+    response = await exhibitor_service.accept_verification(verify_data, session)
+    return response
+
+
+@exhibitor_router.post('/decline')
+async def decline_verification(verify_data: ExhibitorVerify, session: AsyncSession = Depends(get_session)):
+    response = await exhibitor_service.decline_verification(verify_data, session)
+    return response

@@ -1,8 +1,8 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
 from .models import Event, Localization, Category, EventExhibitor
-from .schemas import EventCreateModel
-from src.exhibitors.models import Exhibitor
+from .schemas import EventCreateModel, EventExhibitorVerify
+from src.exhibitors.models import Exhibitor, NotificationUser
 
 
 class EventService:
@@ -36,7 +36,7 @@ class EventService:
 
     async def get_event(self, session: AsyncSession, event_id: int):
 
-        statement_exhibitors = (select(EventExhibitor.stand_num, Exhibitor.exhib_name, Exhibitor.img_url, Exhibitor.tel,
+        statement_exhibitors = (select(EventExhibitor.id, EventExhibitor.stand_num, EventExhibitor.is_verified, Exhibitor.exhib_name, Exhibitor.img_url, Exhibitor.tel,
                                        Exhibitor.adres, Exhibitor.mail, Exhibitor.site_url, Exhibitor.description)
                                 .where(EventExhibitor.exhibitor_id == Exhibitor.id)
                                 .where(EventExhibitor.event_id == event_id)
@@ -85,3 +85,35 @@ class EventService:
         session.add(new_event)
         await session.commit()
         return new_event
+
+    async def accept_event_exhibitor(self, event_exhibitor_data: EventExhibitorVerify, session: AsyncSession):
+        record_statement = select(EventExhibitor).where(EventExhibitor.id == event_exhibitor_data.id)
+        record_result = await session.exec(record_statement)
+        record = record_result.first()
+        record.is_verified = True
+        session.add(record)
+        await session.commit()
+        user_id_statement = select(Exhibitor.user_id).where(Exhibitor.id == record.exhibitor_id)
+        user_id_result = await session.exec(user_id_statement)
+        user_id = user_id_result.first()
+        new_notification = NotificationUser(notification_id=3, user_id=user_id, message=event_exhibitor_data.message)
+        session.add(new_notification)
+        await session.commit()
+        return {"message": "Success"}
+
+    async def decline_event_exhibitor(self, event_exhibitor_data: EventExhibitorVerify, session: AsyncSession):
+        record_statement = select(EventExhibitor).where(EventExhibitor.id == event_exhibitor_data.id)
+        record_result = await session.exec(record_statement)
+        record = record_result.first()
+        exhibitor_id = record.exhibitor_id
+        await session.delete(record)
+        await session.commit()
+
+        user_id_statement = select(Exhibitor.user_id).where(Exhibitor.id == exhibitor_id)
+        user_id_result = await session.exec(user_id_statement)
+        user_id = user_id_result.first()
+        new_notification = NotificationUser(notification_id=4, user_id=user_id, message=event_exhibitor_data.message)
+        session.add(new_notification)
+        await session.commit()
+        return {"message": "Decline successfully"}
+

@@ -5,9 +5,11 @@ from datetime import date
 
 class Exhibitor(BaseModel):
     stand_num: int
+    is_verified: bool
+    id: int
     exhib_name: str
     img_url: HttpUrl
-    tel: str
+    tel: str | None
     adres: str
     mail: str
     site_url: str
@@ -28,6 +30,7 @@ class History(BaseModel):
 
 
 class ExhibitorFullInfo(BaseModel):
+    id: int | None
     exhib_name: str | None
     img_url: HttpUrl | None
     tel: str | None
@@ -45,5 +48,28 @@ class ExhibitorCreate(BaseModel):
     adres: str
     mail: str
     site_url: str
+    category: str
     description: str
     user_id: int
+
+
+class ExhibitorAdmin(ExhibitorCreate):
+    id: int
+
+
+class ExhibitorAdmin2(BaseModel):
+    id: int
+    exhib_name: str
+    img_url: str
+    adres: str
+    mail: str
+    site_url: str
+    short_categ_name: str
+    description: str
+    user_id: int
+
+
+class ExhibitorVerify(BaseModel):
+    id: int
+    user_id: int
+    message: str | None
