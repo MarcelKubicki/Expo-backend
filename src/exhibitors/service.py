@@ -1,13 +1,13 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
-from .models import Exhibitor, ExhibitorUnverified, NotificationUser
+from .models import Exhibitor, ExhibitorUnverified, NotificationUser, Notification
 from .schemas import ExhibitorFullInfo, ExhibitorCreate, ExhibitorAdmin, ExhibitorAdmin2, ExhibitorVerify
 from src.events.models import Category, Event, EventExhibitor
 
 
 class ExhibitorService:
     async def get_all_exhibitors(self, session: AsyncSession, nam, cat):
-        statement = (select(Exhibitor.id, Exhibitor.img_url, Exhibitor.exhib_name, Category.categ_name)
+        statement = (select(Exhibitor.id, Exhibitor.img_url, Exhibitor.exhib_name, Category.categ_name, Exhibitor.short_desc)
                      .where(Exhibitor.category_id == Category.id))
 
         if nam:
@@ -28,12 +28,12 @@ class ExhibitorService:
 
     async def get_exhibitor(self, exhibitor_id: int, session: AsyncSession):
         statement_exhibitor = (select(Exhibitor.id, Exhibitor.exhib_name, Exhibitor.img_url, Exhibitor.tel, Exhibitor.adres,
-                                     Exhibitor.mail, Exhibitor.site_url, Exhibitor.description, Exhibitor.is_edited)
-                               .where(Exhibitor.id == exhibitor_id))
+                                     Exhibitor.mail, Exhibitor.site_url, Exhibitor.description, Exhibitor.is_edited, Exhibitor.short_desc, Category.short_categ_name)
+                               .where(Exhibitor.id == exhibitor_id)).where(Exhibitor.category_id == Category.id)
         result_exhibitor = await session.exec(statement_exhibitor)
         exhibitor = result_exhibitor.first()
 
-        statement_history = (select(Event.date_start, Event.date_end, Event.event_name)
+        statement_history = (select(Event.date_start, Event.date_end, Event.event_name, Event.id)
                              .where(Event.id == EventExhibitor.event_id).where(EventExhibitor.exhibitor_id == exhibitor_id))
         result_history = await session.exec(statement_history)
         history = result_history.all()
@@ -48,20 +48,22 @@ class ExhibitorService:
             "site_url": exhibitor.site_url,
             "description": exhibitor.description,
             "is_edited": exhibitor.is_edited,
-            "history": history
+            "history": history,
+            "short_desc": exhibitor.short_desc,
+            "short_categ_name": exhibitor.short_categ_name
         }
 
         return response
 
     async def get_exhibitor_by_userid(self, user_id: int, session: AsyncSession):
         statement_exhibitor = (select(Exhibitor.id, Exhibitor.exhib_name, Exhibitor.img_url, Exhibitor.tel, Exhibitor.adres,
-                                     Exhibitor.mail, Exhibitor.site_url, Exhibitor.description, Exhibitor.is_edited)
-                               .where(Exhibitor.user_id == user_id))
+                                     Exhibitor.mail, Exhibitor.site_url, Exhibitor.description, Exhibitor.is_edited, Exhibitor.short_desc, Category.short_categ_name)
+                               .where(Exhibitor.user_id == user_id)).where(Exhibitor.category_id == Category.id)
         result_exhibitor = await session.exec(statement_exhibitor)
         exhibitor = result_exhibitor.first()
 
         try:
-            statement_history = (select(Event.date_start, Event.date_end, Event.event_name)
+            statement_history = (select(Event.id, Event.date_start, Event.date_end, Event.event_name)
                                  .where(Event.id == EventExhibitor.event_id).where(EventExhibitor.exhibitor_id == exhibitor.id))
             result_history = await session.exec(statement_history)
             history = result_history.all()
@@ -76,7 +78,9 @@ class ExhibitorService:
                 "site_url": None,
                 "description": None,
                 "is_edited": False,
-                "history": None
+                "history": None,
+                "short_desc": None,
+                "short_categ_name": None
             }
         else:
             response = {
@@ -89,7 +93,9 @@ class ExhibitorService:
                 "site_url": exhibitor.site_url,
                 "description": exhibitor.description,
                 "is_edited": exhibitor.is_edited,
-                "history": history
+                "history": history,
+                "short_desc": exhibitor.short_desc,
+                "short_categ_name": exhibitor.short_categ_name
             }
 
         return response
@@ -198,3 +204,9 @@ class ExhibitorService:
     async def accept_verification(self, verify_data: ExhibitorVerify, session: AsyncSession):
         await self.update_exhibitor(verify_data.id, verify_data.user_id, session)
         await self.decline_verification(verify_data, session)
+
+    async def get_user_notifications(self, user_id: int, session: AsyncSession):
+        statement = (select(NotificationUser.id, NotificationUser.message, Notification.name).where(NotificationUser.notification_id == Notification.id)
+                     .where(NotificationUser.user_id == user_id))
+        result = await session.exec(statement)
+        return result.all()

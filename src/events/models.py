@@ -54,3 +54,11 @@ class EventExhibitor(SQLModel, table=True):
 
     def __repr__(self):
         return f"<EventExhibitor {self.event_id} - {self.exhibitor_id}>"
+
+
+class Photo(SQLModel, table=True):
+    __tablename__ = 'photo'
+
+    id: int | None = Field(default=None, primary_key=True)
+    photo_url: str
+    event_id: int | None = Field(default=None, foreign_key="event.id")

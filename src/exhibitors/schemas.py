@@ -14,6 +14,7 @@ class Exhibitor(BaseModel):
     mail: str
     site_url: str
     description: str
+    user_id: int
 
 
 class ExhibitorListItem(BaseModel):
@@ -21,9 +22,11 @@ class ExhibitorListItem(BaseModel):
     img_url: str
     exhib_name: str
     categ_name: str
+    short_desc: str
 
 
 class History(BaseModel):
+    id: int
     date_start: date
     date_end: date
     event_name: str
@@ -37,13 +40,16 @@ class ExhibitorFullInfo(BaseModel):
     adres: str | None
     mail: str | None
     site_url: str | None
+    short_desc: str | None
     description: str | None
     is_edited: bool | None
     history: List[History] | None
+    short_categ_name: str | None
 
 
 class ExhibitorCreate(BaseModel):
     exhib_name: str
+    short_desc: str | None
     img_url: str
     adres: str
     mail: str
@@ -72,4 +78,10 @@ class ExhibitorAdmin2(BaseModel):
 class ExhibitorVerify(BaseModel):
     id: int
     user_id: int
+    message: str | None
+
+
+class UserNotification(BaseModel):
+    id: int
+    name: str
     message: str | None

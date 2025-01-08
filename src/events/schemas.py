@@ -25,11 +25,13 @@ class EventPageItem(BaseModel):
     lat: float
     lng: float
     exhibitors: List[Exhibitor]
+    photos_urls: List[str]
 
 
 class EventCreateModel(BaseModel):
     event_name: str
     img_url: str
+    photos_urls: List[str]
     date_start: date
     date_end: date
     short_desc: str
@@ -41,3 +43,14 @@ class EventCreateModel(BaseModel):
 class EventExhibitorVerify(BaseModel):
     id: int
     message: str | None
+
+
+class UpcomingFour(BaseModel):
+    id: int
+    img_url: str | None
+
+
+class JoinRequestData(BaseModel):
+    event_id: int
+    exhibitor_id: int
+    stand_num: int

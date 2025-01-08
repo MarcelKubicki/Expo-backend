@@ -1,7 +1,7 @@
 from sqlmodel.ext.asyncio.session import AsyncSession
 from sqlmodel import select
-from .models import Event, Localization, Category, EventExhibitor
-from .schemas import EventCreateModel, EventExhibitorVerify
+from .models import Event, Localization, Category, EventExhibitor, Photo
+from .schemas import EventCreateModel, EventExhibitorVerify, JoinRequestData
 from src.exhibitors.models import Exhibitor, NotificationUser
 
 
@@ -34,10 +34,15 @@ class EventService:
 
         return result.all()
 
+    async def get_upcoming_four(self, session: AsyncSession):
+        statement = select(Event.id, Event.img_url).order_by(Event.date_start)
+        result = await session.exec(statement)
+        return result.fetchmany(4)
+
     async def get_event(self, session: AsyncSession, event_id: int):
 
         statement_exhibitors = (select(EventExhibitor.id, EventExhibitor.stand_num, EventExhibitor.is_verified, Exhibitor.exhib_name, Exhibitor.img_url, Exhibitor.tel,
-                                       Exhibitor.adres, Exhibitor.mail, Exhibitor.site_url, Exhibitor.description)
+                                       Exhibitor.adres, Exhibitor.mail, Exhibitor.site_url, Exhibitor.description, Exhibitor.user_id)
                                 .where(EventExhibitor.exhibitor_id == Exhibitor.id)
                                 .where(EventExhibitor.event_id == event_id)
                                 )
@@ -45,12 +50,16 @@ class EventService:
         result_exhibitors = await session.exec(statement_exhibitors)
         exhibitors_list = result_exhibitors.all()
 
-        statement_event = (select(Event.event_name, Event.img_url, Event.date_start, Event.date_end, Event.long_desc,
+        statement_event = (select(Event.id, Event.event_name, Event.img_url, Event.date_start, Event.date_end, Event.long_desc,
                                   Localization.loc_name, Localization.lat, Localization.lng).where(Event.id == event_id)
                            .where(Event.localization_id == Localization.id))
 
         result_event = await session.exec(statement_event)
         event = result_event.first()
+
+        photos_statement = select(Photo.photo_url).where(Photo.event_id == event.id)
+        result_photos = await session.exec(photos_statement)
+        photos = result_photos.all()
 
         response = {
                     "event_name": event.event_name,
@@ -61,7 +70,8 @@ class EventService:
                     "loc_name": event.loc_name,
                     "lat": event.lat,
                     "lng": event.lng,
-                    "exhibitors": exhibitors_list
+                    "exhibitors": exhibitors_list,
+                    "photos_urls": photos
                     }
 
         return response
@@ -84,6 +94,13 @@ class EventService:
         )
         session.add(new_event)
         await session.commit()
+
+        for photo_url in event_data_dict["photos_urls"]:
+            new_photo = Photo(photo_url=photo_url, event_id=new_event.id)
+            session.add(new_photo)
+
+        await session.commit()
+
         return new_event
 
     async def accept_event_exhibitor(self, event_exhibitor_data: EventExhibitorVerify, session: AsyncSession):
@@ -117,3 +134,9 @@ class EventService:
         await session.commit()
         return {"message": "Decline successfully"}
 
+    async def create_join_request(self, join_request_data: JoinRequestData, session: AsyncSession):
+        join_request_data_dict = join_request_data.model_dump()
+        new_record = EventExhibitor(**join_request_data_dict)
+        session.add(new_record)
+        await session.commit()
+        return new_record
